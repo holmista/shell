@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <wait.h>
 #include <errno.h>
+#include <fcntl.h>
 #include "command_processing.h"
 
 int main(int argc){
@@ -52,11 +53,41 @@ int main(int argc){
             }
             if(pid == 0){
                 char** arguments = parseCommand(commands[i]);
-                int res = execvp(arguments[0], arguments);
-                printf("errorno: %i\n", errno);
-                if (res == -1){
-                    printf("could not execute the command\n");
+                int redirectionIdx = commandContainsRedirection(arguments);
+                if(redirectionIdx > -1){
+                    int argumentsLength = length(arguments);
+                    char** validArguments = malloc((int)sizeof(char*) * argumentsLength); // this is an overkill but won't hurt
+                    int i;
+                    for(i=0; i<redirectionIdx; i++){
+                        validArguments[i] = arguments[i];
+                    }
+                    validArguments[i] = NULL;
+                    char* fileName = arguments[redirectionIdx+1];
+
+                    int fd = open(fileName, O_WRONLY|O_TRUNC|O_CREAT, 0644);
+                    if (fd < 0){
+                        printf("could not open file for redirection\n");
+                        exit(0);
+                    }
+                    if (dup2(fd, STDOUT_FILENO) < 0){ 
+                        printf("could not redirect stdout to a specified file\n");
+                        exit(0);
+                    }
+                    close(fd);
+
+                    int res = execvp(validArguments[0], validArguments);
+                    if (res == -1){
+                        printf("could not execute the command\n");
+                    }
+                    freeDoubleCharPointer(validArguments);
                 }
+                else{
+                    int res = execvp(arguments[0], arguments);
+                    if (res == -1){
+                        printf("could not execute the command\n");
+                    }
+                }
+
                 freeDoubleCharPointer(arguments);
                 exit(0);
             }

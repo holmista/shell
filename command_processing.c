@@ -5,6 +5,16 @@
 #include <stdlib.h>
 
 // assumes it will be NULL terminated
+int length(char** ptr){
+    int count = 0;
+    while (*ptr != NULL) { 
+        count++;
+        ptr++;
+    }
+    return count;
+}
+
+// assumes it will be NULL terminated
 void freeDoubleCharPointer(char** ptr){
     int i = 0;
     while(ptr[i] != NULL){
@@ -197,4 +207,17 @@ char** parseCommand(char* command){
 
     argumentPointers[argumentCount] = NULL;
     return argumentPointers;
+}
+
+/*
+this should get parsed command as an input from parseCommand function
+if a command contains redirection symbol > then it returns it's index, else -1
+*/ 
+int commandContainsRedirection(char** command){
+    for(int i=0; command[i]!=NULL; i++){
+        if(strcmp(command[i], ">") == 0){
+            return i;
+        } 
+    }
+    return -1;
 }

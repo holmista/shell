@@ -1,0 +1,16 @@
+command_processing.c
+command_processing.h
+command_processing.o
+makefile
+program
+README.md
+test
+test2
+test2.c
+test.c
+tests
+test-wish.sh
+text.txt
+wish
+wish.c
+wish.o

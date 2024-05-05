@@ -8,5 +8,7 @@ char** parseInput(char* input);
 char** parseCommand(char* command);
 void freeDoubleCharPointer(char** ptr);
 int doubleCharPointerLength(char** ptr);
+int commandContainsRedirection(char** ptr);
+int length(char**);
 
 #endif
