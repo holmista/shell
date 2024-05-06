@@ -5,30 +5,17 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <string.h>
 
 int main(int argc, char* argv[]){
-    int kidpid;
-    int fd = open("redirected.txt", O_WRONLY|O_TRUNC|O_CREAT, 0644);
-    if (fd < 0) { perror("open"); abort(); }
-    switch (kidpid = fork()) {
-    case -1: perror("fork"); abort();
-    case 0:
-        char* args[] = {"ls", "-a", NULL};
-        if (dup2(fd, 1) < 0) { perror("dup2"); abort(); }
-        close(fd);
-        execvp(args[0], args); perror("execvp"); abort();
-    default:
-        close(fd);
-        /* do whatever the parent wants to do. */
-    }
+    char* command = "ls";
+    char* d = "/bin";
+    char fullPath[1024]; // it's an overkill but I don't want to debug another memory issue
+    
+    strcpy(fullPath, d);
+    strcat(fullPath, "/");
+    strcat(fullPath, command);
 
-    switch (kidpid = fork()) {
-    case -1: perror("fork"); abort();
-    case 0:
-        char* args[] = {"ls", "-a", NULL};
-        execvp(args[0], args); perror("execvp"); abort();
-    default:
-        close(fd);
-        /* do whatever the parent wants to do. */
-    }
+    printf("%s\n", fullPath);
+    return 0;
 }

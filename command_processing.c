@@ -221,3 +221,29 @@ int commandContainsRedirection(char** command){
     }
     return -1;
 }
+
+/*
+receives full path of directories and the name of executable. 
+e.g. ["/bin", "/bin/usr"], "ls"
+returns full path of the command, if the command was not found returns NULL
+*/
+char* getCommandFullPath(char** directories, char* command){
+    if(directories == NULL){
+        return NULL;
+    }
+
+    int i = 0;
+    while(directories[i] != NULL){
+        char fullPath[1024]; // it's an overkill but I don't want to debug another memory issue
+        strcpy(fullPath, directories[i]);
+        strcat(fullPath, "/");
+        strcat(fullPath, command);
+
+        if (access(fullPath, X_OK) == 0) {
+            return strdup(fullPath);
+        }
+
+        i++;
+    }
+    return NULL;
+}

@@ -10,5 +10,6 @@ void freeDoubleCharPointer(char** ptr);
 int doubleCharPointerLength(char** ptr);
 int commandContainsRedirection(char** ptr);
 int length(char**);
+char* getCommandFullPath(char** directories, char* command);
 
 #endif

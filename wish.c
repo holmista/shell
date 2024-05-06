@@ -18,6 +18,10 @@ int main(int argc){
     // the way commands will be received is that user will type somethng and upon pressing enter I'll get the command they typed
     // I'll then process the command
     // go back to while loop line
+
+    char* paths[256];
+    int pathsIdx = 0;
+
     while(1){
         printf("wish> ");
         char* lineptr = NULL;
@@ -26,11 +30,6 @@ int main(int argc){
         if(res == -1){
             printf("failed to read inputted line\n");
             continue;
-        }
-
-        if(strcmp(lineptr, "exit\n") == 0){
-            printf("exiting...\n");
-            exit(0);
         }
 
         if(strcmp(lineptr, "\n") == 0){
@@ -45,44 +44,107 @@ int main(int argc){
 
         for (i=0; i<commandsAmount; i++)
         {
+            char** arguments = parseCommand(commands[i]);
+            int argumentsLength = length(arguments);
+
+            // handle cd
+            if(strcmp(arguments[0], "cd") == 0){
+                if(argumentsLength != 2){
+                    printf("cd can only have one argument\n");
+                    freeDoubleCharPointer(arguments);
+                    continue;
+                }
+                int res = chdir(arguments[1]);
+                if(res == -1){
+                    perror("cd");
+                    freeDoubleCharPointer(arguments);
+                    continue;
+                }
+                freeDoubleCharPointer(arguments);
+                continue;
+            }
+
+            // handle exit
+            else if(strcmp(arguments[0], "exit") == 0){
+                printf("exiting...\n");
+                freeDoubleCharPointer(arguments);
+                exit(0);
+            }
+
+            // handle path
+            else if(strcmp(arguments[0], "path") == 0){
+                for (int i = 0; arguments[i] != NULL; i++) {
+                    paths[i] = NULL;
+                }
+                pathsIdx = 0;
+
+                int i;
+                for(i=1; i<argumentsLength; i++){
+                    paths[pathsIdx] = strdup(arguments[i]);  // create a copy of the path
+                    pathsIdx++;
+                }
+                paths[pathsIdx] = NULL;
+
+                freeDoubleCharPointer(arguments);
+                continue;
+            }
+
+            freeDoubleCharPointer(arguments);
+
             int pid = fork();
             if(pid < 0){
-                printf("failed to execute the command\n");
+                printf("failed to create process for the command execution\n");
                 i++;
                 continue;
             }
             if(pid == 0){
                 char** arguments = parseCommand(commands[i]);
                 int redirectionIdx = commandContainsRedirection(arguments);
-                if(redirectionIdx > -1){
-                    int argumentsLength = length(arguments);
-                    char** validArguments = malloc((int)sizeof(char*) * argumentsLength); // this is an overkill but won't hurt
-                    int i;
-                    for(i=0; i<redirectionIdx; i++){
-                        validArguments[i] = arguments[i];
+                int argumentsLength = length(arguments);
+
+                // replace command with it's full path
+                if (strstr(arguments[0], "/") == NULL){ // is a command like ls
+                    char* commandFullPath = getCommandFullPath(paths, arguments[0]);
+                    if(commandFullPath == NULL){
+                        printf("could not execute command: %s\n", arguments[0]);
+                        freeDoubleCharPointer(arguments);
+                        exit(0);
                     }
-                    validArguments[i] = NULL;
+                    arguments[0] = commandFullPath;
+                }
+
+                // handle redirection
+                if(redirectionIdx > -1){
+                    char** validArguments = malloc((int)sizeof(char*) * argumentsLength); // this is an overkill but won't hurt
+                    int k;
+                    for(k=0; k<redirectionIdx; k++){
+                        validArguments[k] = arguments[k];
+                    }
+                    validArguments[k] = NULL;
                     char* fileName = arguments[redirectionIdx+1];
 
                     int fd = open(fileName, O_WRONLY|O_TRUNC|O_CREAT, 0644);
                     if (fd < 0){
                         printf("could not open file for redirection\n");
+                        freeDoubleCharPointer(validArguments);
                         exit(0);
                     }
                     if (dup2(fd, STDOUT_FILENO) < 0){ 
                         printf("could not redirect stdout to a specified file\n");
+                        freeDoubleCharPointer(validArguments);
                         exit(0);
                     }
                     close(fd);
 
-                    int res = execvp(validArguments[0], validArguments);
+                    int res = execv(validArguments[0], validArguments);
                     if (res == -1){
                         printf("could not execute the command\n");
                     }
                     freeDoubleCharPointer(validArguments);
                 }
+
                 else{
-                    int res = execvp(arguments[0], arguments);
+                    int res = execv(arguments[0], arguments);
                     if (res == -1){
                         printf("could not execute the command\n");
                     }
