@@ -7,28 +7,39 @@
 #include <errno.h>
 #include <fcntl.h>
 #include "command_processing.h"
+#include "utils.h"
 
-int main(int argc){
-    if(argc > 1){
-        printf("can receive only 1 optional argument\n");
-        return 1;
+#define INTERACTIVE_MODE 0
+#define BATH_MODE 1
+
+int main(int argc, char* argv[]){
+    int mode = INTERACTIVE_MODE;
+    FILE* in = stdin;
+    if(argc == 2){
+        mode = BATH_MODE;
+        in = fopen(argv[1], "r");
+        if(in == NULL){
+            exit(1);
+        }
     }
-    // lets assume it's an interactive shell at first
-    // print wish> and run a while loop until the read line is exit or EOF
-    // the way commands will be received is that user will type somethng and upon pressing enter I'll get the command they typed
-    // I'll then process the command
-    // go back to while loop line
+    if(argc > 2){
+      printError();
+      exit(1);
+    }
 
-    char* paths[256];
+    char* paths[256] = {"/bin"};
     int pathsIdx = 0;
 
     while(1){
-        printf("wish> ");
+        if(mode == INTERACTIVE_MODE){
+            printf("wish> ");
+        }
         char* lineptr = NULL;
         size_t len = 0;
-        ssize_t res =  getline(&lineptr, &len, stdin);
+        ssize_t res =  getline(&lineptr, &len, in);
         if(res == -1){
-            printf("failed to read inputted line\n");
+            // printf("failed to read inputted line\n");
+            printError();
             continue;
         }
 
@@ -50,7 +61,8 @@ int main(int argc){
             // handle cd
             if(strcmp(arguments[0], "cd") == 0){
                 if(argumentsLength != 2){
-                    printf("cd can only have one argument\n");
+                    // printf("cd can only have one argument\n");
+                    printError();
                     freeDoubleCharPointer(arguments);
                     continue;
                 }
@@ -66,7 +78,7 @@ int main(int argc){
 
             // handle exit
             else if(strcmp(arguments[0], "exit") == 0){
-                printf("exiting...\n");
+                // printf("exiting...\n");
                 freeDoubleCharPointer(arguments);
                 exit(0);
             }
@@ -93,7 +105,8 @@ int main(int argc){
 
             int pid = fork();
             if(pid < 0){
-                printf("failed to create process for the command execution\n");
+                // printf("failed to create process for the command execution\n");
+                printError();
                 i++;
                 continue;
             }
@@ -106,7 +119,8 @@ int main(int argc){
                 if (strstr(arguments[0], "/") == NULL){ // is a command like ls
                     char* commandFullPath = getCommandFullPath(paths, arguments[0]);
                     if(commandFullPath == NULL){
-                        printf("could not execute command: %s\n", arguments[0]);
+                        // printf("could not execute command: %s\n", arguments[0]);
+                        printError();
                         freeDoubleCharPointer(arguments);
                         exit(0);
                     }
@@ -125,28 +139,34 @@ int main(int argc){
 
                     int fd = open(fileName, O_WRONLY|O_TRUNC|O_CREAT, 0644);
                     if (fd < 0){
-                        printf("could not open file for redirection\n");
+                        // printf("could not open file for redirection\n");
+                        printError();
                         freeDoubleCharPointer(validArguments);
                         exit(0);
                     }
                     if (dup2(fd, STDOUT_FILENO) < 0){ 
-                        printf("could not redirect stdout to a specified file\n");
+                        // printf("could not redirect stdout to a specified file\n");
+                        printError();
                         freeDoubleCharPointer(validArguments);
                         exit(0);
                     }
                     close(fd);
 
                     int res = execv(validArguments[0], validArguments);
+                    // fprintf(stdout, res);
                     if (res == -1){
-                        printf("could not execute the command\n");
+                        printError();
+                        // printf("could not execute the command\n");
                     }
                     freeDoubleCharPointer(validArguments);
                 }
 
                 else{
                     int res = execv(arguments[0], arguments);
+                    // printf("here");
                     if (res == -1){
-                        printf("could not execute the command\n");
+                        // printf("could not execute the command\n");
+                        printError();
                     }
                 }
 
