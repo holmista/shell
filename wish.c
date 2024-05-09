@@ -19,6 +19,7 @@ int main(int argc, char* argv[]){
         mode = BATH_MODE;
         in = fopen(argv[1], "r");
         if(in == NULL){
+            printError();
             exit(1);
         }
     }
@@ -101,6 +102,20 @@ int main(int argc, char* argv[]){
                 continue;
             }
 
+            // handle echo
+            else if(strcmp(arguments[0], "echo") == 0){
+                int i;
+                for(i=1; i<argumentsLength-1; i++){
+                    printf("%s ", arguments[i]);
+                }
+
+                printf("%s", arguments[i]);
+                printf("\n");
+
+                freeDoubleCharPointer(arguments);
+                continue;
+            }
+
             freeDoubleCharPointer(arguments);
 
             int pid = fork();
@@ -112,9 +127,6 @@ int main(int argc, char* argv[]){
             }
             if(pid == 0){
                 char** arguments = parseCommand(commands[i]);
-                for(int i=0; arguments[i] != NULL; i++){
-                    printf("%s\n", arguments[i]);
-                }
                 int redirectionIdx = commandContainsRedirection(arguments);
                 int argumentsLength = length(arguments);
 
@@ -175,7 +187,6 @@ int main(int argc, char* argv[]){
 
                 else{
                     int res = execv(arguments[0], arguments);
-                    // printf("here");
                     if (res == -1){
                         // printf("could not execute the command\n");
                         printError();

@@ -129,6 +129,9 @@ char** parseInput(char* input){
     for (int i = commandStartIdx; i <= len; i++){
         if (input[i] == '&' || input[i] == '\n'){
             int bytesAmount = i - commandStartIdx;
+            if(bytesAmount <= 1){
+                continue;
+            }
             char* command = (char*)malloc(bytesAmount + 1);  // add +1 for null terminator
             if (command == NULL) {
                 // printf("failed to allocate memory for command");
