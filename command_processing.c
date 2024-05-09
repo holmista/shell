@@ -156,6 +156,50 @@ char** parseInput(char* input){
 }
 
 /*
+inserts spaces around redirection > symbol if it doesn't have any. This is necesarry for parsing command later
+*/
+char* insertSpacesAroundRedirection(char* command) {
+    int len = strlen(command);
+    int new_len = len;
+
+    int pos = strchr(command, '>') - command;
+
+    if (pos > 0 && command[pos - 1] != ' ') {
+        new_len++;
+    }
+    
+    if (pos < len - 1 && command[pos + 1] != ' ') {
+        new_len++;
+    }
+
+    char* new_command = malloc(new_len + 1);  // +1 for null terminator
+    if (!new_command) {
+        perror("Failed to allocate memory");
+        exit(EXIT_FAILURE);
+    }
+
+    int i = 0, j = 0;
+
+    while (i < len){
+        if (i == pos){
+            if (pos > 0 && command[pos - 1] != ' '){
+                new_command[j++] = ' ';
+            }
+            new_command[j++] = command[i++];
+            if (pos < len - 1 && command[pos + 1] != ' '){
+                new_command[j++] = ' ';
+            }
+        } 
+        else{
+            new_command[j++] = command[i++];
+        }
+    }
+
+    new_command[j] = '\0';
+    return new_command;
+}
+
+/*
 breaks up command by it's componentsand returns them.
 e.g. "ls   -a" -> ["ls", "-a"]
 1. the command should be trimmed
@@ -166,6 +210,10 @@ it is caller's responsibility to free each individual argument and the array of 
 */
 char** parseCommand(char* command){
     char* trimmed = removeExcessWhitespaceFromBetween(command);
+
+    if(strstr(trimmed, ">") != NULL){
+        trimmed = insertSpacesAroundRedirection(trimmed);
+    }
 
     // get the amount of arguments
     int len = strlen(trimmed);
@@ -187,7 +235,7 @@ char** parseCommand(char* command){
 
 
     for(int i=0; i<=len; i++){
-        if(trimmed[i] == ' ' || trimmed[i] == '\0' || trimmed[i] == '>'){
+        if(trimmed[i] == ' ' || trimmed[i] == '\0'){
             int argLen = i-argStartIdx+1;
             char* argument = (char*)malloc(argLen+1);
             if (argument == NULL) {
@@ -203,31 +251,10 @@ char** parseCommand(char* command){
             }
             argument[j] = '\0';
 
-            if(strcmp(argument, "") != 0){
-                argStartIdx = i + 1;
-                argumentPointers[argumentCount] = argument;
-                argumentCount++;
-            }
-
-            if(trimmed[i] == '>'){
-                char* argument = (char*)malloc(2);
-                if (argument == NULL) {
-                    // printf("failed to allocate memory for command argument");
-                    printError();
-                    exit(1);
-                }
-                argument[0] = '>';
-                argument[1] = '\0';
-
-                int inc = 1;
-                if(i+1<len && trimmed[i+1] == ' '){
-                    inc = 2;
-                }
-
-                argStartIdx = i + inc;
-                argumentPointers[argumentCount] = argument;
-                argumentCount++;
-            }
+            argStartIdx = i + 1;
+            argumentPointers[argumentCount] = argument;
+            argumentCount++;
+            
         }
     }
 

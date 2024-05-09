@@ -112,6 +112,9 @@ int main(int argc, char* argv[]){
             }
             if(pid == 0){
                 char** arguments = parseCommand(commands[i]);
+                for(int i=0; arguments[i] != NULL; i++){
+                    printf("%s\n", arguments[i]);
+                }
                 int redirectionIdx = commandContainsRedirection(arguments);
                 int argumentsLength = length(arguments);
 
