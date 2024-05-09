@@ -3,6 +3,7 @@
 #include <wait.h>
 #include <string.h>
 #include <stdlib.h>
+#include "utils.h"
 
 // assumes it will be NULL terminated
 int length(char** ptr){
@@ -117,19 +118,21 @@ char** parseInput(char* input){
     // separate command into separate commands
     char** commandPointers = (char**)malloc((commandsAmount + 1) * sizeof(char*)); // +1 for NULL at the end
     if (commandPointers == NULL) {
-        printf("failed to allocate memory for commands");
+        // printf("failed to allocate memory for commands");
+        printError();
         exit(1);
     }
 
     int commandStartIdx = 0;
     int commandCount = 0;
 
-    for (int i = commandStartIdx; i <= len; i++) {
-        if (input[i] == '&' || input[i] == '\n') {
+    for (int i = commandStartIdx; i <= len; i++){
+        if (input[i] == '&' || input[i] == '\n'){
             int bytesAmount = i - commandStartIdx;
             char* command = (char*)malloc(bytesAmount + 1);  // add +1 for null terminator
             if (command == NULL) {
-                printf("failed to allocate memory for command");
+                // printf("failed to allocate memory for command");
+                printError();
                 exit(1);
             }
 
@@ -175,7 +178,7 @@ char** parseCommand(char* command){
 
     char** argumentPointers = malloc((int)sizeof(char*)*(argumentsAmount+1));
     if (argumentPointers == NULL) {
-        printf("failed to allocate memory for arguments");
+        printError();
         exit(1);
     }
 
@@ -184,11 +187,12 @@ char** parseCommand(char* command){
 
 
     for(int i=0; i<=len; i++){
-        if(trimmed[i] == ' ' || trimmed[i] == '\0'){
+        if(trimmed[i] == ' ' || trimmed[i] == '\0' || trimmed[i] == '>'){
             int argLen = i-argStartIdx+1;
             char* argument = (char*)malloc(argLen+1);
             if (argument == NULL) {
-                printf("failed to allocate memory for command argument");
+                // printf("failed to allocate memory for command argument");
+                printError();
                 exit(1);
             }
 
@@ -199,9 +203,31 @@ char** parseCommand(char* command){
             }
             argument[j] = '\0';
 
-            argStartIdx = i + 1;
-            argumentPointers[argumentCount] = argument;
-            argumentCount++;
+            if(strcmp(argument, "") != 0){
+                argStartIdx = i + 1;
+                argumentPointers[argumentCount] = argument;
+                argumentCount++;
+            }
+
+            if(trimmed[i] == '>'){
+                char* argument = (char*)malloc(2);
+                if (argument == NULL) {
+                    // printf("failed to allocate memory for command argument");
+                    printError();
+                    exit(1);
+                }
+                argument[0] = '>';
+                argument[1] = '\0';
+
+                int inc = 1;
+                if(i+1<len && trimmed[i+1] == ' '){
+                    inc = 2;
+                }
+
+                argStartIdx = i + inc;
+                argumentPointers[argumentCount] = argument;
+                argumentCount++;
+            }
         }
     }
 

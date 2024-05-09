@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -Wpedantic -g
 
-program: wish.o command_processing.o
+wish: wish.o command_processing.o utils.o
 	$(CC) $^ -o $@
 
 wish.o: wish.c command_processing.h
@@ -10,8 +10,14 @@ wish.o: wish.c command_processing.h
 command_processing.o: command_processing.c command_processing.h
 	$(CC) $(CFLAGS) -c $<
 
-clean:
-	rm -f *.o program
+utils.o: utils.c utils.h
+	$(CC) $(CFLAGS) -c $<
 
-run: program
-	./program
+clean:
+	rm -f *.o wish
+
+run: wish
+	./wish $(filter-out $@,$(MAKECMDGOALS))
+
+%:
+	@:

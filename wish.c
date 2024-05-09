@@ -77,7 +77,7 @@ int main(int argc, char* argv[]){
             }
 
             // handle exit
-            else if(strcmp(arguments[0], "exit") == 0){
+            else if(strcmp(arguments[0], "exit") == 0 && argumentsLength == 1){
                 // printf("exiting...\n");
                 freeDoubleCharPointer(arguments);
                 exit(0);
@@ -135,6 +135,15 @@ int main(int argc, char* argv[]){
                         validArguments[k] = arguments[k];
                     }
                     validArguments[k] = NULL;
+                    int validArgumentsLength = length(validArguments);
+
+                    // there should only be 1 argument after >
+                    if(argumentsLength - validArgumentsLength != 2){
+                        printError();
+                        freeDoubleCharPointer(arguments);
+                        exit(0);
+                    }
+
                     char* fileName = arguments[redirectionIdx+1];
 
                     int fd = open(fileName, O_WRONLY|O_TRUNC|O_CREAT, 0644);
