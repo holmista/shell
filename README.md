@@ -1,6 +1,6 @@
-# WISH - Wisconsin Shell
+# WISH
 
-WISH (Wisconsin Shell) is a simple Unix shell implementation that provides basic command-line interface functionality. This project demonstrates fundamental concepts of process creation, management, and Unix system programming.
+WISH is a simple Unix shell implementation that provides basic command-line interface functionality.
 
 ## Features
 
