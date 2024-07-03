@@ -1,2 +1,4 @@
-/tests-out/
-tests-out/4.err
+*.o
+*
+!*/
+!*.*
